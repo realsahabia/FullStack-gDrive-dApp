@@ -1,51 +1,53 @@
-import {useState, useEffect} from 'react';
+import { useState } from 'react';
 import axios from "axios";
-import './FileUpload.css'
+import './FileUpload.css';
 
-export default function FileUpload({contract, account}) {
-    const [fileInput, setFileInput] = useState(null);
-    const [uploadedFileName, setUploadedFileName] = useState("");
-  
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+export default function FileUpload({ contract, account }) {
+  const [fileInput, setFileInput] = useState(null);
+  const [uploadedFileName, setUploadedFileName] = useState("");
+  const [error, setError] = useState(null);
 
-        if(fileInput){
-            try {
-                const formData = new FormData();
-                formData.append("file", fileInput) 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-                const resFile = await axios({
-                    method: "post",
-                    url: "https://api.pinata.cloud/pinning/pinFileToIPFS",
-                    data: formData,
-                    headers: {
-                      pinata_api_key: `3d1287d8f89411e76199`,
-                      pinata_secret_api_key: `c774939cfc8d192ece45edc077a111dd9400b8786740643217df32ac8e41f4f8`,
-                      "Content-Type": "multipart/form-data",
-                    },
-                  });
+    if (fileInput) {
+      try {
+        const formData = new FormData();
+        formData.append("file", fileInput);
 
-                const imgHash = `https://gateway.pinata.cloud/ipfs/${resFile.data.IpfsHash}`;
+        const resFile = await axios.post(
+          "https://api.pinata.cloud/pinning/pinFileToIPFS",
+          formData,
+          {
+            headers: {
+              pinata_api_key: `3d1287d8f89411e76199`,
+              pinata_secret_api_key: `c774939cfc8d192ece45edc077a111dd9400b8786740643217df32ac8e41f4f8`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
 
-            } catch(error){
-                alert(error);
-            }
-        }
+        const imgHash = `https://gateway.pinata.cloud/ipfs/${resFile.data.IpfsHash}`;
+        await contract.add(account, imgHash); // Make sure to await contract.add
+        alert("Image uploaded successfully!");
+        setUploadedFileName("No image selected");
+        setFileInput(null);
+        setError(null); // Clear any previous error
+      } catch (err) {
+        console.error(`Error uploading the file: ${err}`);
+        setError("An error occurred while uploading the file. Please try again."); // Set error message
+      }
     }
+  };
 
-    const retrieveFile = (event) =>{
-        const data = event.target.files[0];
-        const reader = new window.FileReader();
-        reader.readAsArrayBuffer(data);   // read file contents as an ArrayBuffer
-        reader.onloadend = () => {
-            setFileInput(event.target.files[0]);
-        }
+  const retrieveFile = (event) => {
+    const data = event.target.files[0];
+    setFileInput(data);
+    setUploadedFileName(data.name); // save the uploaded file name
+    event.preventDefault(); // prevent page refresh on form submit
+  };
 
-        setUploadedFileName(data.name);  // save the uploaded file name
-        event.preventDefault()           // prevent page refresh on form submit
-    }
-
-    return (
+  return (
     <div className="top">
       <form className="form" onSubmit={handleSubmit}>
         <label htmlFor="file-upload" className="choose">
@@ -56,12 +58,14 @@ export default function FileUpload({contract, account}) {
           id="file-upload"
           name="data"
           onChange={retrieveFile}
+          disabled = {!account}
         />
-        <span className="textArea">Image: Nothing</span>
-        <button type="submit" className="upload">
+        <span className="textArea">Image: {uploadedFileName}</span>
+        {error && <p className="error">{error}</p>} {/* Display error message */}
+        <button type="submit" className="upload" disabled = {!fileInput}>
           Upload File
         </button>
       </form>
     </div>
-  )
+  );
 }
