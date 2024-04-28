@@ -54,7 +54,7 @@ function App() {
       // const contractAddress = Config[1337].dgdrive.address;
       // const abi = GDRIVE.abi
 
-      const contractAddress = "0x8cA569a6D9530AAeA718fb1Ac0d74e9cb15B989D";
+      const contractAddress = "0x8697e708461De14D7aB3ffbB41D323870b25a0D9";
 
       const contractData = new ethers.Contract(contractAddress, abi, currentProvider);
       console.log("Token master contract", contractData)
