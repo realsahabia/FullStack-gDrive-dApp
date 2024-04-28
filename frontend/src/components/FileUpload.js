@@ -2,7 +2,7 @@ import { useState } from 'react';
 import axios from "axios";
 import './FileUpload.css';
 
-export default function FileUpload({ contract, account }) {
+export default function FileUpload({ contract, account, signer }) {
   const [fileInput, setFileInput] = useState(null);
   const [uploadedFileName, setUploadedFileName] = useState("");
   const [error, setError] = useState(null);
@@ -28,7 +28,12 @@ export default function FileUpload({ contract, account }) {
         );
 
         const imgHash = `https://gateway.pinata.cloud/ipfs/${resFile.data.IpfsHash}`;
-        await contract.add(account, imgHash); // Make sure to await contract.add
+        console.log(imgHash);
+
+       const tx = await contract.connect(signer).add(account, imgHash); // Make sure to await contract.add
+
+        tx.wait();
+
         alert("Image uploaded successfully!");
         setUploadedFileName("No image selected");
         setFileInput(null);
