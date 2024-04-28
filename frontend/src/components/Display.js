@@ -1,55 +1,53 @@
 import React, { useState } from "react";
 import "./Display.css";
 
-const Display = ({ contract, account }) => {
-  // const [displayValue, setDisplayValue] = useState("No data");
-  const [data, setData] = useState("");
-
+const Display = ({ contract, account, signer }) => {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
 
   const getData = async () => {
+    const otherAddress = document.querySelector(".address").value || account;
+    let result;
 
-  let result; 
-  const otherAddress = document.querySelector(".address").value;
-      
-  try {
-    if (otherAddress){
-      result = await contract.displayData(otherAddress);
-    } else {
-      result = await contract.displayData(account);
-    }
-  } catch (error) {
-    console.error("Error getting data:", error);
-    // Handle error (e.g., show error message)
-  }
+    try {
+      result = await contract.connect(signer).displayData(otherAddress);
+      if (!result || result.length === 0) {
+        setData(null);
+        setError('No images to display.');
+        return;
+      }
 
-  const isEmpty = Object.keys(result).length === 0;
-  
-  if (!isEmpty) {
-    const images = result.map((el, i) => {
-      return (
+      const images = result.map((el, i) => (
         <a href={el} key={`a-${i}`} target="_blank" rel="noopener noreferrer">
-          <img key={`img-${i}`} src={el} alt={`Img ${i+1}`}  className="image-list"/>
-        </a> 
-      )
-    })
-    setData(images)
-  }  else {
-    setData('No Images to display')
-  }
-
+          <img src={el} alt={`Img ${i+1}`} className="image-list"/>
+        </a>
+      ));
+      setData(images);
+      setError(""); // Reset error state
+    } catch (error) {
+      console.error("Error getting data:", error);
+      setError('Failed to retrieve images.');
+      setData(null);
+    }
   };
 
   return (
     <>
+      {error && <div className="error">{error}</div>}
       <div className="image-list">{data}</div>
-      <input
-        type="text"
-        placeholder="Enter Address"
-        className="address"
-      ></input>
-      <button className="center button" onClick={getData}>
-        Get Data
-      </button>
+
+      {account && (
+        <>
+          <input
+            type="text"
+            placeholder="Enter Address"
+            className="address"
+          />
+          <button className="center button" onClick={getData}>
+            View Data
+          </button>
+        </>
+      )}
     </>
   );
 };

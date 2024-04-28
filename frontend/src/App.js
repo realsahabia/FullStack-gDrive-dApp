@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
-import Dgdrive from './artifacts/contracts/Dgdrive.sol/Dgdrive.json';
 import FileUpload from './components/FileUpload';
 import Display from './components/Display';
 import { ethers } from 'ethers';
 import Modal from './components/Modal';
 
-import Config from "./config.json";
-import GDRIVE from "./artifacts/contracts/Dgdrive.sol/Dgdrive.json"
+// import Config from "./config.json";
+// import GDRIVE from "./artifacts/contracts/Dgdrive.sol/Dgdrive.json"
+import abi from "./Remix-de_abi.json"
 
 function App() {
   const [account, setAccount] = useState("");
@@ -15,6 +15,8 @@ function App() {
   const [provider, setProvider] = useState(null);
   const [signer, setSigner] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [connectWallet, setConnectWallet] = useState("Connect");
+
 
 
 
@@ -22,6 +24,7 @@ function App() {
     // Fetch accounts
     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
     setAccount(accounts[0]);
+    setConnectWallet("Connected!");
   
     // Refresh account
     window.ethereum.on('accountsChanged', async () => {
@@ -48,8 +51,11 @@ function App() {
       const signer = await currentProvider.getSigner();
       setSigner(signer)
 
-      const contractAddress = Config[1337].dgdrive.address;
-      const abi = GDRIVE.abi
+      // const contractAddress = Config[1337].dgdrive.address;
+      // const abi = GDRIVE.abi
+
+      const contractAddress = "0x8cA569a6D9530AAeA718fb1Ac0d74e9cb15B989D";
+
       const contractData = new ethers.Contract(contractAddress, abi, currentProvider);
       console.log("Token master contract", contractData)
       
@@ -61,26 +67,39 @@ function App() {
     }
   };
 
-  useEffect(() =>{
-    connectHandler();
-  }, []);
+  // useEffect(() =>{
+  //   connectHandler();
+  // }, []);
   
   return (
-    <>
-    {!modalOpen && (
-      <button className="share" onClick={() => setModalOpen(true)}>Share</button>
+    <div className="main">
+  <div className="btnDiv">
+    {account && (
+        <button className="share" onClick={() => setModalOpen(true)}>Share</button>
+      )} 
+      {
+        modalOpen && (
+          <Modal setModalOpen={setModalOpen} contract={contract} signer={signer}/>
+        )
+      }
+
+    {connectWallet && (
+        <button className="connect" onClick={() => connectHandler()}>{connectWallet}</button>
     )} 
-    {
-      modalOpen && (
-        <Modal setModalOpen={setModalOpen} contract={contract} signer={signer}/>
-      )
-    }
+  </div>
 
     <div className='App'>
       <h1 style={{ color: 'white' }}>Decentralized Google Drive</h1>
       <div className='bg'></div>
-      <p style={{ color: 'white' }}>
-        Account: {account ? account : 'Not connected'}
+      <div className='bg bg2'></div>
+      <div className='bg bg3'></div>
+
+
+      <p className="conText">
+        Account: {account ? (account ) : (
+
+        <span>Not connected</span>
+        )}
       </p>
       <FileUpload 
         account={account} 
@@ -90,10 +109,11 @@ function App() {
       />
       <Display 
         contract={contract} 
-        account={account} 
+        account={account}
+        signer={signer} 
       />
     </div>
-    </>
+    </div>
   );
 }
 
